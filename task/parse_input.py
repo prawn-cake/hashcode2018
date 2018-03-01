@@ -39,5 +39,6 @@ def parse(inpt=None):
     
     return meta, rides
 
+
 if __name__ == "__main__":
     print(parse())

@@ -1,13 +1,13 @@
 import math
 
 
-def total_cost(cos, distance, ttw=0):
-    return sum([cos, distance, ttw])
+def total_cost(cos, d, ttw=0):
+    return sum([cos, d, ttw])
 
 
 def distance(coord1, coord2):
-    a, b = coord1
-    x, y = coord2
+    a, b = map(int, coord1)
+    x, y = map(int, coord2)
     return math.fabs(a - x) + math.fabs(b - y)
 
 
