@@ -1,0 +1,8 @@
+.idea
+.env
+*.pyc
+.tox
+.cache/
+.coverage
+__pycache__
+venv
