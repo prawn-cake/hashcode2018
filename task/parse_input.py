@@ -1,10 +1,10 @@
 """Parse input data methods"""
 
-import sys
 import os
+import sys
 
 
-def parse():
+def parse(inpt=None):
     """
     Parse input
     returns list meta as below
@@ -26,8 +26,7 @@ def parse():
     s – the earliest start(0 ≤ s < T)
     f – the latest finish (0 ≤ f ≤ T) , (f ≥ s + |x − a| + |y − b|)
     """
-    data = os.path.abspath(sys.argv[1])
-    print(data)
+    data = os.path.abspath(inpt or sys.argv[1])
 
     with open(data) as fp:
         meta = fp.readline().split()
@@ -39,3 +38,6 @@ def parse():
                 rides.append(r)
     
     return meta, rides
+
+if __name__ == "__main__":
+    print(parse())
