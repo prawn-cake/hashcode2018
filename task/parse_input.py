@@ -29,7 +29,7 @@ def parse(inpt=None):
     data = os.path.abspath(inpt or sys.argv[1])
 
     with open(data) as fp:
-        meta = fp.readline().split()
+        meta = map(int, fp.readline().split())
         rides = []
         for l in fp.readlines():
             l = list(map(int, l.split()))
