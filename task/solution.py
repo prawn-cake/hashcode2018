@@ -21,8 +21,7 @@ def main():
         current_time += 1
         if current_time >= T:
             break
-    # parse_output.output(orders, 'output.txt')
-    # print('orders: %s' % orders)
+    print('orders: %s' % orders)
 
 
 def ride_score(cur_pos, ride, current_time):
@@ -30,13 +29,9 @@ def ride_score(cur_pos, ride, current_time):
     coord1, coord2, [s, f] = ride
     s = int(s)
     f = int(f)
-    # print('coord1: {}'.format(coord1))
-    # print('cur_pos: {}'.format(cur_pos))
     ride_distance = int(helpers.distance(coord1, coord2))
-    # print(coord2)
     cost_of_start = int(helpers.distance(cur_pos, coord1))
     time_to_wait = 0 if current_time >= s else s - current_time
-    # print('time_to_wait: %s' % time_to_wait)
     total_cost = helpers.total_cost(cos=cost_of_start,
                                     d=ride_distance,
                                     ttw=time_to_wait)
