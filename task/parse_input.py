@@ -32,7 +32,7 @@ def parse(inpt=None):
         meta = fp.readline().split()
         rides = []
         for l in fp.readlines():
-            l = l.split()
+            l = list(map(int, l.split()))
             if len(l) >= 6:
                 r = (l[0],l[1]), (l[2],l[3]), (l[4],l[5])
                 rides.append(r)
