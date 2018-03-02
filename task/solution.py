@@ -3,7 +3,7 @@ from task import helpers, parse_input, parse_output
 
 
 def main():
-    meta, rides = parse_input.parse('../data/b_should_be_easy.in')
+    meta, rides = parse_input.parse('../data/c_no_hurry.in')
     rows, columns, vehicles, num_of_rides, bonus, T = map(int, meta)
 
     total_score = 0
@@ -38,9 +38,10 @@ def ride_score(cur_pos, ride, current_time):
     time_to_wait = 0 if current_time >= s else s - current_time
     # print('time_to_wait: %s' % time_to_wait)
     total_cost = helpers.total_cost(cos=cost_of_start,
-                                    d=cost_of_start,
+                                    d=ride_distance,
                                     ttw=time_to_wait)
-    return ride_distance / total_cost, ride_distance
+    score = ride_distance / total_cost
+    return score, ride_distance
 
 
 def assign_ride(rides_map, radar, current_time, orders, total_score):
