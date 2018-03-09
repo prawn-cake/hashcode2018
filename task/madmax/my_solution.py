@@ -17,6 +17,45 @@ class Car:
         return 'Car(%s, %s)' % (self.id, self.t)
 
 
+def pick_car(ride, car_list, schedule, radar, avg_distance_per_car, reserved_cars, use_balancer=True):
+    actual_start_t, actual_end_t, picked_car, min_cost = None, None, None, None
+
+    for car in car_list:
+        # Load balancer function
+        if use_balancer:
+            if sum([o.ride.dist for o in schedule[car]]) >= 0.7 * avg_distance_per_car:
+                reserved_cars.append(car)
+                continue
+
+        if not is_car_available(car, ride, schedule):
+            continue
+
+        time_to_reach = helpers.distance(radar[car.id], ride.coord_start)
+        time_to_wait = max(0, ride.start_t - car.t - time_to_reach)
+        ride_distance = helpers.distance(ride.coord_start, ride.coord_finish)
+
+        actual_start_t = car.t + time_to_reach + time_to_wait
+        actual_end_t = actual_start_t + ride_distance
+
+        if actual_end_t >= ride.finish_t:
+            # a car can't make it
+            continue
+
+        cost = time_to_reach + time_to_wait + ride_distance
+
+        if min_cost is None:
+            min_cost, picked_car = cost, car
+        elif cost < min_cost:
+            picked_car = car
+            min_cost = cost
+    return picked_car, actual_start_t, actual_end_t, min_cost, reserved_cars
+
+
+def prioritise_rides(rides_list):
+    # Default implementation to sort by start time
+    return sorted(rides_list, key=lambda r: r.start_t)
+
+
 def main(meta, rides):
     rows, columns, vehicles, num_of_rides, bonus, T = meta
     print('rows: %s, columns: %s, vehicles: %s, num_of_rides: %s, bonus: %s, T: %s' % (rows, columns, vehicles, num_of_rides, bonus, T))
@@ -33,7 +72,7 @@ def main(meta, rides):
     # TODO: this could be reordered
     # priority_queue = deque(sorted(rides_list, key=lambda r: r.start_t))
     priority_queue = sorted(rides_list, key=lambda r: r.start_t)
-    print('priority_queue: %s' % priority_queue)
+    # print('priority_queue: %s' % priority_queue)
     total_distance = sum([ride.dist for ride in rides_list])
     avg_distance_per_car = total_distance / vehicles
 
@@ -44,44 +83,25 @@ def main(meta, rides):
     skipped_rides = 0
 
     for ride in priority_queue:
-        if total_score > T:
-            break
+        # if total_score > T:
+        #     break
 
-        picked_car = None
-        min_cost = None
+        reserved_cars = []
 
-        for car in cars_list:  # TODO: is car available
-            # if sum([o.ride.dist for o in schedule[car]]) >= avg_distance_per_car:
-            #     continue
-
-            if not is_car_available(car, ride, schedule):
-                continue
-
-            time_to_reach = helpers.distance(radar[car.id], ride.coord_start)
-            time_to_wait = max(0, ride.start_t - car.t - time_to_reach)
-            ride_distance = helpers.distance(ride.coord_start, ride.coord_finish)
-
-            actual_start_t = car.t + time_to_reach + time_to_wait
-            actual_end_t = actual_start_t + ride_distance
-
-            if actual_end_t >= ride.finish_t:
-                # a car can't make it
-                continue
-
-            cost = time_to_reach + time_to_wait + ride_distance
-
-            if len(schedule[car]) == 0:
-                picked_car, min_cost = car, cost
-                break
-            elif min_cost is None:
-                min_cost, picked_car = cost, car
-            elif cost < min_cost:
-                picked_car = car
-                min_cost = cost
+        picked_car, actual_start_t, actual_end_t, min_cost, reserved_cars = pick_car(
+            ride, cars_list, schedule, radar, avg_distance_per_car, reserved_cars)
 
         if picked_car is None:
-            skipped_rides += 1
-            continue
+            # Try to find a car from the reserved ones
+            if reserved_cars:
+                picked_car, actual_start_t, actual_end_t, min_cost, reserved_cars = pick_car(
+                    ride, cars_list, schedule, radar, avg_distance_per_car, reserved_cars, use_balancer=False)
+                if picked_car is None:
+                    skipped_rides += 1
+                    continue
+            else:
+                skipped_rides += 1
+                continue
 
         # Add an order
         total_score += ride_score(total_ride_cost, picked_car, ride, radar, bonus)
@@ -91,7 +111,11 @@ def main(meta, rides):
         total_ride_cost += min_cost
         picked_car.t += min_cost
 
-    print('skipped: %d' % skipped_rides)
+        if actual_start_t == ride.start_t:
+            total_bonus += bonus
+
+    print('skipped: %d (%d percent)' % (skipped_rides, (skipped_rides / num_of_rides) * 100))
+    print('total score: %d (score: %d, bonus: %d)' % (total_score + total_bonus, total_score, total_bonus))
     return schedule
 
 
@@ -153,7 +177,7 @@ def generate_result(filename):
     items = []
     for car, orders in sorted(schedule.items(), key=lambda item: item[0].id):
         items.append([str(o.ride.id) for o in orders])
-        print('car %d -> %s' % (car.id, ', '.join([str(o.ride.id) for o in orders])))
+        # print('car %d -> %s' % (car.id, ', '.join([str(o.ride.id) for o in orders])))
 
     parse_output.write_output(items, '../../result/%s.txt' % filename)
 
@@ -163,10 +187,12 @@ if __name__ == '__main__':
     names = ['a_example.in', 'b_should_be_easy.in', 'c_no_hurry.in',
              'd_metropolis.in', 'e_high_bonus.in']
     # filename = 'a_example.in'
-    filename = 'b_should_be_easy.in'
+    # filename = 'b_should_be_easy.in'
     # filename = 'c_no_hurry.in'
     # filename = 'd_metropolis.in'
     # filename = 'e_high_bonus.in'
     for filename in names:
+        print('-' * 100)
+        print('Generate result for %s' % filename)
         generate_result(filename)
     # generate_result(filename)
